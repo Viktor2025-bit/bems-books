@@ -87,7 +87,7 @@ export function HeroCarousel() {
 
   // Auto-play
   React.useEffect(() => {
-    const timer = setInterval(() => paginate(1), 8000);
+    const timer = setInterval(() => paginate(1), 5000);
     return () => clearInterval(timer);
   }, []);
 

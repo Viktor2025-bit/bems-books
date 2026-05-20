@@ -32,7 +32,7 @@ export function Header() {
             B
           </div>
           <span className="text-2xl font-bold tracking-tight text-primary">
-            Bookzen
+            Bems Books
           </span>
         </Link>
 

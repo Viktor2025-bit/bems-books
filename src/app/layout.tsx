@@ -3,7 +3,7 @@ import { Header } from "@/components/layout/Header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bookzen | Premium E-book Store",
+  title: "Bems Books | Premium E-book Store",
   description: "Discover and read the best e-books.",
 };
 
