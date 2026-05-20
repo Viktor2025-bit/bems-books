@@ -5,6 +5,7 @@ import { Star, ShoppingCart, ChevronLeft, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import { Book } from "@/components/catalog/BookCard";
+import { AddToCartActions } from "@/components/catalog/AddToCartActions";
 
 // Mock Data
 const BOOKS: Book[] = [
@@ -91,18 +92,7 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="flex-1 text-lg rounded-full">
-                  Buy Now
-                </Button>
-                <Button variant="outline" size="lg" className="flex-1 text-lg rounded-full gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Add to Cart
-                </Button>
-                <Button variant="outline" size="icon" className="rounded-full w-12 h-12 flex-shrink-0">
-                  <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" />
-                </Button>
-              </div>
+              <AddToCartActions book={book} />
               
               <p className="text-sm text-gray-400 mt-6 flex items-center justify-center sm:justify-start">
                 <span className="w-2 h-2 rounded-full bg-highlight mr-2" />

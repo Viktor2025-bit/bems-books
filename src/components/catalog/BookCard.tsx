@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Star, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useCart } from "@/store/useCart";
 
 export interface Book {
   id: string;
@@ -21,6 +22,13 @@ interface BookCardProps {
 }
 
 export function BookCard({ book }: BookCardProps) {
+  const { addItem } = useCart();
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigating to the book details page
+    addItem(book);
+  };
+
   return (
     <motion.div
       whileHover={{ y: -8 }}
@@ -41,7 +49,11 @@ export function BookCard({ book }: BookCardProps) {
 
         {/* Quick Add Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-          <Button variant="primary" className="rounded-full shadow-lg gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+          <Button 
+            variant="primary" 
+            onClick={handleQuickAdd}
+            className="rounded-full shadow-lg gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300"
+          >
             <ShoppingCart className="w-4 h-4" />
             Quick Add
           </Button>
