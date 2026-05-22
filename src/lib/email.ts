@@ -1,0 +1,22 @@
+export async function sendEbookEmail(email: string, orderId: string, items: any[]) {
+  // In a real production environment, we would use Resend, SendGrid, or AWS SES here
+  // e.g., await resend.emails.send({ ... })
+
+  console.log("=========================================");
+  console.log(`📧 MOCK EMAIL SENT TO: ${email}`);
+  console.log(`Order ID: ${orderId}`);
+  console.log("Subject: Your Bems Books E-book Download Links");
+  console.log("Body:");
+  console.log(`Thank you for your purchase from Bems Books!`);
+  console.log(`Here are your secure download links:`);
+  
+  items.forEach((item, index) => {
+    // Generate a secure, signed URL in a real app
+    const secureLink = `https://bems-books.com/download/${item.id}?token=mock_secure_token_${Date.now()}`;
+    console.log(`${index + 1}. ${item.title} - ${secureLink}`);
+  });
+
+  console.log("=========================================");
+
+  return { success: true };
+}

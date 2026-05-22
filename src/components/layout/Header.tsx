@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ShoppingCart, Search, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +12,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 export function Header() {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const { items, setIsOpen } = useCart();
+  const { data: session } = useSession();
   
   // Calculate total items in cart
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -74,9 +76,20 @@ export function Header() {
               <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
             </div>
             
-            <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-              <User className="w-5 h-5" />
-            </Button>
+            {/* Auth-aware User Button */}
+            {session?.user ? (
+              <Link href="/dashboard">
+                <div className="w-9 h-9 bg-gradient-to-br from-primary to-highlight rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer hover:scale-110 transition-transform shadow-md">
+                  {session.user.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+              </Link>
+            ) : (
+              <Link href="/sign-in">
+                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                  <User className="w-5 h-5" />
+                </Button>
+              </Link>
+            )}
 
             <Button variant="ghost" size="icon" className="relative" onClick={() => setIsOpen(true)}>
               <ShoppingCart className="w-5 h-5" />
