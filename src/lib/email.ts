@@ -9,6 +9,17 @@ export async function sendVerificationEmail(email: string, token: string) {
   return { success: true };
 }
 
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetLink = `http://localhost:3000/new-password?token=${token}`;
+
+  console.log("=========================================");
+  console.log(`📧 MOCK PASSWORD RESET EMAIL SENT TO: ${email}`);
+  console.log(`Reset Link: ${resetLink}`);
+  console.log("=========================================");
+
+  return { success: true };
+}
+
 export async function sendEbookEmail(email: string, orderId: string, items: any[]) {
   // In a real production environment, we would use Resend, SendGrid, or AWS SES here
   // e.g., await resend.emails.send({ ... })
