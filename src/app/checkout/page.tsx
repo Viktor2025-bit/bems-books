@@ -7,24 +7,48 @@ import { Check, ShieldCheck, ChevronLeft } from "lucide-react";
 import { useCart } from "@/store/useCart";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useSession } from "next-auth/react";
+import { processDemoPurchase } from "@/lib/actions/checkout";
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-  const { items, getCartTotal } = useCart();
+  const { data: session } = useSession();
+  const { items, getCartTotal, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const router = useRouter();
 
   const total = getCartTotal();
   const tax = total * 0.08; // 8% mock tax
   const finalTotal = total + tax;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!session) {
+      setError("Please sign in to complete your purchase.");
+      router.push("/sign-in?callbackUrl=/checkout");
+      return;
+    }
+
     setIsProcessing(true);
-    // Mock Stripe processing delay
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const result = await processDemoPurchase(items);
+      
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setIsSuccess(true);
+        clearCart();
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setIsProcessing(false);
-      setIsSuccess(true);
-    }, 2000);
+    }
   };
 
   if (isSuccess) {
@@ -35,11 +59,16 @@ export default function CheckoutPage() {
         </div>
         <h1 className="text-4xl font-bold font-jost mb-4">Payment Successful!</h1>
         <p className="text-xl text-gray-600 mb-8 max-w-lg">
-          Thank you for your purchase. We are securely generating your e-book download links and emailing them to you right now.
+          Thank you for your purchase. Your e-books have been added to your library and are ready to read.
         </p>
-        <Link href="/catalog">
-          <Button size="lg" className="rounded-full">Continue Browsing</Button>
-        </Link>
+        <div className="flex gap-4">
+          <Link href="/dashboard">
+            <Button size="lg" className="rounded-full">Go to My Library</Button>
+          </Link>
+          <Link href="/catalog">
+            <Button variant="outline" size="lg" className="rounded-full">Continue Browsing</Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -57,6 +86,12 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7">
             <h1 className="text-3xl font-bold font-jost mb-8">Secure Checkout</h1>
             
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               {/* Contact Info */}
               <section>
@@ -64,7 +99,13 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email address *</label>
-                    <Input type="email" placeholder="Where should we send your e-books?" required />
+                    <Input 
+                      type="email" 
+                      placeholder="Where should we send your e-books?" 
+                      defaultValue={session?.user?.email || ""}
+                      disabled={!!session}
+                      required 
+                    />
                   </div>
                 </div>
               </section>
@@ -75,19 +116,8 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Card Information *</label>
-                    {/* Placeholder for Stripe Element */}
-                    <div className="w-full h-10 rounded-md border border-gray-300 bg-gray-50 flex items-center px-3 text-gray-400 text-sm">
-                      Stripe Card Element will load here
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                      <Input type="text" placeholder="MM/YY" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">CVC</label>
-                      <Input type="text" placeholder="123" />
+                    <div className="w-full h-10 rounded-md border border-gray-300 bg-gray-50 flex items-center px-3 text-gray-400 text-sm italic">
+                      Demo Mode: No real payment will be processed.
                     </div>
                   </div>
                 </div>
@@ -98,9 +128,9 @@ export default function CheckoutPage() {
                 size="lg"
                 className="w-full text-lg rounded-full shadow-lg"
                 isLoading={isProcessing}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || isProcessing}
               >
-                {isProcessing ? "Processing..." : `Pay $${finalTotal.toFixed(2)}`}
+                {isProcessing ? "Processing..." : `Complete Purchase - $${finalTotal.toFixed(2)}`}
               </Button>
               
               <p className="flex items-center justify-center text-sm text-gray-500 mt-4 gap-2">
@@ -122,7 +152,7 @@ export default function CheckoutPage() {
                   items.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="relative w-16 h-24 rounded shadow-sm overflow-hidden flex-shrink-0">
-                        <Image src={item.cover} alt={item.title} fill className="object-cover" />
+                        <Image src={item.coverImage} alt={item.title} fill className="object-cover" />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold line-clamp-1">{item.title}</h3>

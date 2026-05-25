@@ -29,6 +29,7 @@ model User {
   
   reviews               Review[]
   orders                Order[]
+  library               UserBook[]
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -96,6 +97,20 @@ model TwoFactorConfirmation {
   @@unique([userId])
 }
 
+model UserBook {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  
+  progress  Int      @default(0) // Percentage 0-100
+  lastRead  DateTime @default(now())
+  isFinished Boolean @default(false)
+
+  @@unique([userId, bookId])
+}
+
 model Category {
   id    String @id @default(cuid())
   name  String @unique
@@ -119,6 +134,7 @@ model Book {
   
   reviews     Review[]
   orderItems  OrderItem[]
+  users       UserBook[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
