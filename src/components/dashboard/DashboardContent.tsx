@@ -110,11 +110,21 @@ export function DashboardContent({ user, library, orders }: DashboardContentProp
                       </p>
                     </div>
                   </div>
-                  <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex gap-3">
-                    <Button size="sm" className="flex-1 rounded-full gap-2">
+                  <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/50 flex flex-col gap-2">
+                    <Button size="sm" className="w-full rounded-full gap-2">
                       <BookOpen className="w-4 h-4" />
-                      Read Now
+                      Read Online
                     </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 rounded-full gap-2 text-xs">
+                        <Download className="w-3 h-3" />
+                        EPUB
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 rounded-full gap-2 text-xs">
+                        <Download className="w-3 h-3" />
+                        PDF
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
