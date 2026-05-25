@@ -1,40 +1,55 @@
 "use client";
 
 import * as React from "react";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, BookOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FormError } from "@/components/FormError";
+import { FormSuccess } from "@/components/FormSuccess";
+import { login } from "@/lib/actions/login";
+import { LoginSchema } from "@/lib/schemas";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
-  const router = useRouter();
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [error, setError] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const urlError = searchParams.get("error") === "OAuthAccountNotLinked"
+    ? "Email already in use with different provider!"
+    : "";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [error, setError] = React.useState<string | undefined>("");
+  const [success, setSuccess] = React.useState<string | undefined>("");
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<z.infer<typeof LoginSchema>>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof LoginSchema>) => {
     setError("");
-    setIsLoading(true);
+    setSuccess("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
+    startTransition(() => {
+      login(values).then((data) => {
+        if (data?.error) {
+          setError(data.error);
+        }
+
+        if (data?.success) {
+          setSuccess(data.success);
+        }
+      });
     });
-
-    setIsLoading(false);
-
-    if (result?.error) {
-      setError("Invalid email or password. Try demo@bemsbooks.com / demo123");
-    } else {
-      router.push("/dashboard");
-      router.refresh();
-    }
   };
 
   return (
@@ -56,51 +71,56 @@ export default function SignInPage() {
 
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-              {error}
-            </div>
-          )}
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            className="space-y-5"
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <div className="relative">
+                  <Input
+                    {...form.register("email")}
+                    disabled={isPending}
+                    type="email"
+                    placeholder="demo@bemsbooks.com"
+                    className="pl-10"
+                  />
+                  <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+                {form.formState.errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.email.message}</p>
+                )}
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <div className="relative">
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@bemsbooks.com"
-                  className="pl-10"
-                  required
-                />
-                <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <Input
+                    {...form.register("password")}
+                    disabled={isPending}
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                  />
+                  <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+                {form.formState.errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.password.message}</p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-              <div className="relative">
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10"
-                  required
-                />
-                <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-              </div>
-            </div>
+            <FormError message={error || urlError} />
 
             <Button
+              disabled={isPending}
               type="submit"
               size="lg"
               className="w-full rounded-full text-lg gap-2"
-              isLoading={isLoading}
             >
-              Sign In
-              <ArrowRight className="w-5 h-5" />
+              {isPending ? "Signing in..." : "Sign In"}
+              {!isPending && <ArrowRight className="w-5 h-5" />}
             </Button>
           </form>
 
@@ -115,8 +135,9 @@ export default function SignInPage() {
           <Button
             variant="outline"
             size="lg"
+            disabled={isPending}
             className="w-full rounded-full gap-3"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => signIn("google", { callbackUrl: callbackUrl || "/dashboard" })}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />

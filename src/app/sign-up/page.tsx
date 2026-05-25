@@ -1,14 +1,46 @@
 "use client";
 
 import * as React from "react";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, BookOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FormError } from "@/components/FormError";
+import { FormSuccess } from "@/components/FormSuccess";
+import { register } from "@/lib/actions/register";
+import { RegisterSchema } from "@/lib/schemas";
 import Link from "next/link";
 
 export default function SignUpPage() {
+  const [error, setError] = React.useState<string | undefined>("");
+  const [success, setSuccess] = React.useState<string | undefined>("");
+  const [isPending, startTransition] = React.useTransition();
+
+  const form = useForm<z.infer<typeof RegisterSchema>>({
+    resolver: zodResolver(RegisterSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      name: "",
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof RegisterSchema>) => {
+    setError("");
+    setSuccess("");
+
+    startTransition(() => {
+      register(values).then((data) => {
+        setError(data.error);
+        setSuccess(data.success);
+      });
+    });
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-20 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <motion.div
@@ -28,34 +60,74 @@ export default function SignUpPage() {
 
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-          <form className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
-              <div className="relative">
-                <Input type="text" placeholder="John Doe" className="pl-10" required />
-                <User className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            className="space-y-5"
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                <div className="relative">
+                  <Input 
+                    {...form.register("name")}
+                    disabled={isPending}
+                    type="text" 
+                    placeholder="John Doe" 
+                    className="pl-10" 
+                  />
+                  <User className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+                {form.formState.errors.name && (
+                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.name.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <div className="relative">
+                  <Input 
+                    {...form.register("email")}
+                    disabled={isPending}
+                    type="email" 
+                    placeholder="you@example.com" 
+                    className="pl-10" 
+                  />
+                  <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+                {form.formState.errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.email.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <Input 
+                    {...form.register("password")}
+                    disabled={isPending}
+                    type="password" 
+                    placeholder="••••••••" 
+                    className="pl-10" 
+                  />
+                  <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+                {form.formState.errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.password.message}</p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <div className="relative">
-                <Input type="email" placeholder="you@example.com" className="pl-10" required />
-                <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-              </div>
-            </div>
+            <FormError message={error} />
+            <FormSuccess message={success} />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-              <div className="relative">
-                <Input type="password" placeholder="••••••••" className="pl-10" required />
-                <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-              </div>
-            </div>
-
-            <Button type="submit" size="lg" className="w-full rounded-full text-lg gap-2">
-              Create Account
-              <ArrowRight className="w-5 h-5" />
+            <Button 
+              disabled={isPending}
+              type="submit" 
+              size="lg" 
+              className="w-full rounded-full text-lg gap-2"
+            >
+              {isPending ? "Creating account..." : "Create Account"}
+              {!isPending && <ArrowRight className="w-5 h-5" />}
             </Button>
           </form>
 
@@ -70,6 +142,7 @@ export default function SignUpPage() {
           <Button
             variant="outline"
             size="lg"
+            disabled={isPending}
             className="w-full rounded-full gap-3"
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >

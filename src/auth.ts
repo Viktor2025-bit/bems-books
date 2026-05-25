@@ -36,6 +36,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
 
         if (passwordMatch) {
+          // Prevent login if email is not verified
+          if (!user.emailVerified) return null;
+
           return {
             id: user.id,
             name: user.name,
