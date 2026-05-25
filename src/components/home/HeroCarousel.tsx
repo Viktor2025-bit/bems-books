@@ -14,7 +14,7 @@ const FEATURED_BOOKS = [
     description: "Discover how living with less can bring more joy, focus, and clarity to your everyday life.",
     price: "$14.99",
     bgColor: "bg-[#F3F4F6]",
-    cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop",
+    cover: "/books/placeholder.svg",
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ const FEATURED_BOOKS = [
     description: "A gripping mystery thriller set in the neon-lit streets of modern Tokyo.",
     price: "$19.99",
     bgColor: "bg-[#E5E7EB]",
-    cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800&auto=format&fit=crop",
+    cover: "/books/placeholder.svg",
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ const FEATURED_BOOKS = [
     description: "A comprehensive guide to building modern, scalable design systems for the web.",
     price: "$29.99",
     bgColor: "bg-[#F9FAFB]",
-    cover: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=800&auto=format&fit=crop",
+    cover: "/books/placeholder.svg",
   },
   {
     id: 4,
@@ -41,7 +41,7 @@ const FEATURED_BOOKS = [
     description: "A shocking psychological thriller of a woman's act of violence against her husband.",
     price: "$21.99",
     bgColor: "bg-[#F3F4F6]",
-    cover: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=800&auto=format&fit=crop",
+    cover: "/books/placeholder.svg",
   },
   {
     id: 5,
@@ -50,7 +50,7 @@ const FEATURED_BOOKS = [
     description: "No matter your goals, Atomic Habits offers a proven framework for improving every day.",
     price: "$16.99",
     bgColor: "bg-[#E5E7EB]",
-    cover: "https://images.unsplash.com/photo-1522407183863-c0bf2256188c?q=80&w=800&auto=format&fit=crop",
+    cover: "/books/placeholder.svg",
   }
 ];
 
@@ -158,11 +158,15 @@ export function HeroCarousel() {
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
               className="relative hidden md:block perspective-1000"
             >
-              <div className="relative w-72 h-[450px] mx-auto shadow-2xl group hover:-translate-y-4 transition-transform duration-500 rounded-r-xl overflow-hidden">
+              <div className="relative w-72 h-[450px] mx-auto shadow-2xl group hover:-translate-y-4 transition-transform duration-500 rounded-r-xl overflow-hidden bg-red-200">
+                <p>DEBUG: Image path {current.cover}</p>
+                <img src={current.cover} alt="test" />
                 <Image
                   src={current.cover}
                   alt={current.title}
                   fill
+                  unoptimized
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover"
                 />
                 {/* Book spine effect */}
