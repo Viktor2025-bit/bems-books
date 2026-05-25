@@ -1,15 +1,20 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
+
+import { db } from "@/lib/db";
+import { UserRole } from "@prisma/client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(db),
+  session: { strategy: "jwt" },
   providers: [
-    // Google OAuth — will work once real keys are added to .env.local
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-    // Credentials provider for email/password demo login
     Credentials({
       name: "credentials",
       credentials: {
@@ -17,26 +22,58 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Mock user validation — replace with real DB lookup in production
-        if (
-          credentials?.email === "demo@bemsbooks.com" &&
-          credentials?.password === "demo123"
-        ) {
+        if (!credentials?.email || !credentials?.password) return null;
+
+        const user = await db.user.findUnique({
+          where: { email: credentials.email as string },
+        });
+
+        if (!user || !user.password) return null;
+
+        const passwordMatch = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        );
+
+        if (passwordMatch) {
           return {
-            id: "1",
-            name: "Demo User",
-            email: "demo@bemsbooks.com",
-            image: null,
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: user.role,
           };
         }
+
         return null;
       },
     }),
   ],
-  pages: {
-    signIn: "/sign-in",
-  },
   callbacks: {
+    async session({ token, session }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+
+      if (token.role && session.user) {
+        session.user.role = token.role as UserRole;
+      }
+
+      return session;
+    },
+    async jwt({ token }) {
+      if (!token.sub) return token;
+
+      const existingUser = await db.user.findUnique({
+        where: { id: token.sub },
+      });
+
+      if (!existingUser) return token;
+
+      token.role = existingUser.role;
+
+      return token;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
@@ -46,5 +83,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true;
     },
+  },
+  pages: {
+    signIn: "/sign-in",
   },
 });

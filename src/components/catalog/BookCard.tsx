@@ -13,7 +13,7 @@ export interface Book {
   title: string;
   author: string;
   price: number;
-  cover: string;
+  coverImage: string;
   rating: number;
 }
 
@@ -38,7 +38,7 @@ export function BookCard({ book }: BookCardProps) {
       <Link href={`/book/${book.id}`} className="relative h-64 w-full bg-gray-50 flex items-center justify-center p-4">
         <div className="relative w-[140px] h-[200px] shadow-md group-hover:scale-105 transition-transform duration-500">
           <Image
-            src={book.cover}
+            src={book.coverImage}
             alt={book.title}
             fill
             className="object-cover rounded-r-md"

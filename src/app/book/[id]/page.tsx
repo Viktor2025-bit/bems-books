@@ -1,25 +1,22 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ShoppingCart, ChevronLeft, Heart } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Star, ChevronLeft } from "lucide-react";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
-import { Book } from "@/components/catalog/BookCard";
 import { AddToCartActions } from "@/components/catalog/AddToCartActions";
-
-// Mock Data
-const BOOKS: Book[] = [
-  { id: "1", title: "The Art of Simplicity", author: "Elena Rossi", price: 14.99, rating: 4.8, cover: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=800&auto=format&fit=crop" },
-  { id: "2", title: "Midnight in Tokyo", author: "Kenji Sato", price: 19.99, rating: 4.5, cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800&auto=format&fit=crop" },
-  { id: "3", title: "Design Systems", author: "Sarah Drasner", price: 29.99, rating: 5.0, cover: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=800&auto=format&fit=crop" },
-  { id: "4", title: "The Silent Patient", author: "Alex Michaelides", price: 21.99, rating: 4.2, cover: "https://images.unsplash.com/photo-1522407183863-c0bf2256188c?q=80&w=800&auto=format&fit=crop" },
-  { id: "5", title: "Atomic Habits", author: "James Clear", price: 16.99, rating: 4.9, cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop" },
-];
+import { getBookById, getBooks } from "@/lib/actions/books";
+import { notFound } from "next/navigation";
 
 export default async function ProductDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const book = BOOKS.find(b => b.id === resolvedParams.id) || BOOKS[0];
-  const relatedBooks = BOOKS.filter(b => b.id !== book.id);
+  const book = await getBookById(resolvedParams.id);
+
+  if (!book) {
+    notFound();
+  }
+
+  const allBooks = await getBooks();
+  const relatedBooks = allBooks.filter(b => b.id !== book.id).slice(0, 5);
 
   return (
     <div className="pt-32 pb-20 min-h-screen bg-gray-50/30">
@@ -38,7 +35,7 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
             <div className="flex justify-center items-center">
               <div className="relative w-64 h-[400px] md:w-80 md:h-[500px] shadow-2xl rounded-r-xl overflow-hidden hover:scale-105 transition-transform duration-500">
                 <Image
-                  src={book.cover}
+                  src={book.coverImage}
                   alt={book.title}
                   fill
                   className="object-cover"
@@ -54,7 +51,7 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className={`w-5 h-5 ${i < Math.floor(book.rating) ? "fill-current" : "text-gray-300"}`} />
                 ))}
-                <span className="text-sm text-gray-500 ml-2 font-medium">{book.rating} / 5.0 (128 reviews)</span>
+                <span className="text-sm text-gray-500 ml-2 font-medium">{book.rating} / 5.0 ({book.reviews.length} reviews)</span>
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold font-jost text-primary mb-2">
@@ -67,12 +64,7 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
               </div>
 
               <div className="prose prose-gray max-w-none mb-10 text-gray-600 leading-relaxed">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-                <p>
-                  Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
-                </p>
+                <p>{book.description}</p>
               </div>
 
               {/* Specs */}
@@ -82,12 +74,12 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
                   <div className="font-medium text-primary">EPUB, PDF</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500 mb-1">Language</div>
-                  <div className="font-medium text-primary">English</div>
+                  <div className="text-sm text-gray-500 mb-1">Category</div>
+                  <div className="font-medium text-primary">{book.category.name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-500 mb-1">Pages</div>
-                  <div className="font-medium text-primary">342</div>
+                  <div className="text-sm text-gray-500 mb-1">Stock</div>
+                  <div className="font-medium text-primary">{book.stock > 0 ? "In Stock" : "Out of Stock"}</div>
                 </div>
               </div>
 
@@ -103,9 +95,11 @@ export default async function ProductDetails({ params }: { params: Promise<{ id:
         </div>
 
         {/* Related Books */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <CategoryCarousel title="Readers Also Bought" books={relatedBooks} />
-        </div>
+        {relatedBooks.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <CategoryCarousel title="Readers Also Bought" books={relatedBooks} />
+          </div>
+        )}
       </div>
     </div>
   );
