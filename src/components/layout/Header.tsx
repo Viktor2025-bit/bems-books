@@ -4,13 +4,16 @@ import * as React from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { ShoppingCart, Search, Menu, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useCart } from "@/store/useCart";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
 export function Header() {
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
   const { items, setIsOpen } = useCart();
   const { data: session } = useSession();
   
@@ -24,6 +27,15 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/catalog?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push("/catalog");
+    }
+  };
 
   return (
     <>
@@ -67,14 +79,18 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center space-x-4">
-            <div className="hidden lg:flex relative w-64">
+            <form onSubmit={handleSearch} className="hidden lg:flex relative w-64">
               <Input
                 type="text"
                 placeholder="Search books, authors..."
                 className="pl-10 rounded-full bg-gray-50/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-            </div>
+              <button type="submit" className="absolute left-3 top-2.5">
+                <Search className="w-5 h-5 text-gray-400" />
+              </button>
+            </form>
             
             {/* Auth-aware User Button */}
             {session?.user ? (
