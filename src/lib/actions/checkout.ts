@@ -3,11 +3,12 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { sendEbookEmail } from "@/lib/email";
 
 export async function processDemoPurchase(items: any[]) {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session.user.email) {
     return { error: "Not authenticated" };
   }
 
@@ -48,6 +49,9 @@ export async function processDemoPurchase(items: any[]) {
         },
       });
     }
+
+    // 3. Send automated fulfillment email
+    await sendEbookEmail(session.user.email, order.id, items);
 
     revalidatePath("/dashboard");
     return { success: true, orderId: order.id };
