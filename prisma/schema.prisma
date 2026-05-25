@@ -30,6 +30,7 @@ model User {
   reviews               Review[]
   orders                Order[]
   library               UserBook[]
+  cart                  Cart?
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -111,6 +112,25 @@ model UserBook {
   @@unique([userId, bookId])
 }
 
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+}
+
 model Category {
   id    String @id @default(cuid())
   name  String @unique
@@ -132,13 +152,15 @@ model Book {
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
   
-  reviews     Review[]
-  orderItems  OrderItem[]
-  users       UserBook[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+  reviews               Review[]
+  orderItems            OrderItem[]
+  users                 UserBook[]
+  cartItems             CartItem[]
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  }
+
 
 model Review {
   id      String @id @default(cuid())
