@@ -25,6 +25,7 @@ export default function SignInPage() {
 
   const [error, setError] = React.useState<string | undefined>("");
   const [success, setSuccess] = React.useState<string | undefined>("");
+  const [showTwoFactor, setShowTwoFactor] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   const form = useForm<z.infer<typeof LoginSchema>>({
@@ -48,6 +49,10 @@ export default function SignInPage() {
         if (data?.success) {
           setSuccess(data.success);
         }
+
+        if (data?.twoFactor) {
+          setShowTwoFactor(true);
+        }
       });
     });
   };
@@ -65,8 +70,12 @@ export default function SignInPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary text-white rounded-2xl mb-4 shadow-lg shadow-primary/20">
             <BookOpen className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold font-jost text-primary">Welcome Back</h1>
-          <p className="text-gray-500 mt-2">Sign in to access your library</p>
+          <h1 className="text-3xl font-bold font-jost text-primary">
+            {showTwoFactor ? "Two-Factor Authentication" : "Welcome Back"}
+          </h1>
+          <p className="text-gray-500 mt-2">
+            {showTwoFactor ? "Enter the 6-digit code sent to your email" : "Sign in to access your library"}
+          </p>
         </div>
 
         {/* Form Card */}
@@ -76,47 +85,71 @@ export default function SignInPage() {
             className="space-y-5"
           >
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                <div className="relative">
-                  <Input
-                    {...form.register("email")}
-                    disabled={isPending}
-                    type="email"
-                    placeholder="demo@bemsbooks.com"
-                    className="pl-10"
-                  />
-                  <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+              {showTwoFactor && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">2FA Code</label>
+                  <div className="relative">
+                    <Input
+                      {...form.register("code")}
+                      disabled={isPending}
+                      type="text"
+                      placeholder="123456"
+                      className="pl-10"
+                    />
+                    <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                  </div>
+                  {form.formState.errors.code && (
+                    <p className="text-xs text-red-500 mt-1">{form.formState.errors.code.message}</p>
+                  )}
                 </div>
-                {form.formState.errors.email && (
-                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.email.message}</p>
-                )}
-              </div>
+              )}
 
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <Link href="/reset" className="text-xs text-highlight hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    {...form.register("password")}
-                    disabled={isPending}
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                  />
-                  <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
-                </div>
-                {form.formState.errors.password && (
-                  <p className="text-xs text-red-500 mt-1">{form.formState.errors.password.message}</p>
-                )}
-              </div>
+              {!showTwoFactor && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <div className="relative">
+                      <Input
+                        {...form.register("email")}
+                        disabled={isPending}
+                        type="email"
+                        placeholder="demo@bemsbooks.com"
+                        className="pl-10"
+                      />
+                      <Mail className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                    </div>
+                    {form.formState.errors.email && (
+                      <p className="text-xs text-red-500 mt-1">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-medium text-gray-700">Password</label>
+                      <Link href="/reset" className="text-xs text-highlight hover:underline">
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        {...form.register("password")}
+                        disabled={isPending}
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10"
+                      />
+                      <Lock className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                    </div>
+                    {form.formState.errors.password && (
+                      <p className="text-xs text-red-500 mt-1">{form.formState.errors.password.message}</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             <FormError message={error || urlError} />
+            <FormSuccess message={success} />
 
             <Button
               disabled={isPending}
@@ -124,7 +157,7 @@ export default function SignInPage() {
               size="lg"
               className="w-full rounded-full text-lg gap-2"
             >
-              {isPending ? "Signing in..." : "Sign In"}
+              {isPending ? "Authenticating..." : showTwoFactor ? "Verify Code" : "Sign In"}
               {!isPending && <ArrowRight className="w-5 h-5" />}
             </Button>
           </form>

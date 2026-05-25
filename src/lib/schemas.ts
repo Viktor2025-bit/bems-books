@@ -33,3 +33,9 @@ export const NewPasswordSchema = z.object({
     message: "Minimum 6 characters required",
   }),
 });
+
+export const TwoFactorSchema = z.object({
+  code: z.string().min(6, {
+    message: "6-digit code required",
+  }),
+});
