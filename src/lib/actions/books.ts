@@ -1,8 +1,38 @@
 import { db } from "@/lib/db";
 
-export async function getBooks() {
+export async function getBooks(filters?: {
+  query?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+}) {
   try {
+    const where: any = {};
+
+    if (filters?.query) {
+      where.OR = [
+        { title: { contains: filters.query, mode: "insensitive" } },
+        { author: { contains: filters.query, mode: "insensitive" } },
+      ];
+    }
+
+    if (filters?.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      where.price = {};
+      if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+      if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+    }
+
+    if (filters?.minRating !== undefined) {
+      where.rating = { gte: filters.minRating };
+    }
+
     const books = await db.book.findMany({
+      where,
       include: {
         category: true,
       },

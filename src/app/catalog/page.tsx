@@ -3,8 +3,22 @@ import { FilterSidebar } from "@/components/catalog/FilterSidebar";
 import { BookCard } from "@/components/catalog/BookCard";
 import { getBooks } from "@/lib/actions/books";
 
-export default async function CatalogPage() {
-  const books = await getBooks();
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  
+  const filters = {
+    query: typeof params.q === "string" ? params.q : undefined,
+    categoryId: typeof params.category === "string" ? params.category : undefined,
+    minPrice: params.minPrice ? parseFloat(params.minPrice as string) : undefined,
+    maxPrice: params.maxPrice ? parseFloat(params.maxPrice as string) : undefined,
+    minRating: params.minRating ? parseFloat(params.minRating as string) : undefined,
+  };
+
+  const books = await getBooks(filters);
 
   return (
     <div className="pt-32 pb-20 container mx-auto px-4 min-h-screen">
