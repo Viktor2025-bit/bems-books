@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.beta",
-});
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -30,18 +25,15 @@ export async function POST(req: Request) {
 
     const amount = cart.items.reduce((sum, item) => sum + item.book.price * item.quantity, 0);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe uses cents
-      currency: "usd",
-      metadata: {
-        userId: session.user.id,
-        cartId: cart.id,
-      },
+    // Paystack expects amount in kobo/pesewas (amount * 100)
+    // We return the amount and email to the frontend to initialize the payment
+    return NextResponse.json({ 
+      amount: Math.round(amount * 100),
+      email: session.user.email,
+      reference: `BEMS-${Date.now()}`
     });
-
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error("Stripe Checkout Error:", error);
+    console.error("Paystack Checkout Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { useSession } from "next-auth/react";
 import { processDemoPurchase } from "@/lib/actions/checkout";
 import { useRouter } from "next/navigation";
+import PaystackPop from "@paystack/inline-js";
 
 export default function CheckoutPage() {
   const { data: session } = useSession();
@@ -36,23 +37,43 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-      const result = await processDemoPurchase(items);
-      
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setIsSuccess(true);
-        clearCart();
-      }
+      // 1. Get payment details from our backend
+      const response = await fetch("/api/checkout", { method: "POST" });
+      const { amount, email, reference } = await response.json();
+
+      // 2. Initialize Paystack
+      const paystack = new PaystackPop();
+      paystack.newTransaction({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+        amount,
+        email,
+        reference,
+        onSuccess: async (transaction: any) => {
+          // 3. Process the successful purchase in our database
+          const result = await processDemoPurchase(items);
+          if (result.error) {
+            setError(result.error);
+            setIsProcessing(false);
+          } else {
+            setIsSuccess(true);
+            clearCart();
+          }
+        },
+        onCancel: () => {
+          setIsProcessing(false);
+          setError("Payment cancelled.");
+        },
+      });
+
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setIsProcessing(false);
     }
   };
 
   if (isSuccess) {
     return (
+      // ... (success UI remains the same)
       <div className="pt-32 pb-20 min-h-screen container mx-auto px-4 flex flex-col items-center justify-center text-center">
         <div className="w-20 h-20 bg-highlight/20 text-highlight rounded-full flex items-center justify-center mb-6">
           <Check className="w-10 h-10" />
@@ -74,6 +95,7 @@ export default function CheckoutPage() {
   }
 
   return (
+    // ... (form structure)
     <div className="pt-32 pb-20 min-h-screen bg-gray-50/50">
       <div className="container mx-auto px-4 max-w-6xl">
         <Link href="/catalog" className="inline-flex items-center text-sm text-gray-500 hover:text-primary mb-8 transition-colors">
@@ -110,19 +132,6 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {/* Payment Info */}
-              <section className="pt-6 border-t border-gray-100">
-                <h2 className="text-xl font-bold mb-4">Payment Details</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Card Information *</label>
-                    <div className="w-full h-10 rounded-md border border-gray-300 bg-gray-50 flex items-center px-3 text-gray-400 text-sm italic">
-                      Demo Mode: No real payment will be processed.
-                    </div>
-                  </div>
-                </div>
-              </section>
-
               <Button
                 type="submit"
                 size="lg"
@@ -135,12 +144,11 @@ export default function CheckoutPage() {
               
               <p className="flex items-center justify-center text-sm text-gray-500 mt-4 gap-2">
                 <ShieldCheck className="w-4 h-4 text-green-600" />
-                Payments are securely processed by Stripe.
+                Payments are securely processed by Paystack.
               </p>
             </form>
           </div>
-
-          {/* Order Summary */}
+          {/* ... (Order Summary) */}
           <div className="lg:col-span-5">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 sticky top-32">
               <h2 className="text-xl font-bold mb-6">Order Summary</h2>
