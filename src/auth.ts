@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 
 import { db } from "@/lib/db";
 import { UserRole } from "@prisma/client";
+import { getTwoFactorConfirmationByUserId } from "./lib/data/two-factor-token";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -61,6 +62,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.role && session.user) {
         session.user.role = token.role as UserRole;
       }
+      
+      if (session.user) {
+        session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
+        session.user.isTwoFactorConfirmed = token.isTwoFactorConfirmed as boolean;
+      }
 
       return session;
     },
@@ -73,6 +79,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       if (!existingUser) return token;
 
+      const existingConfirmation = await getTwoFactorConfirmationByUserId(existingUser.id);
+
+      token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
+      token.isTwoFactorConfirmed = !!existingConfirmation;
+
       token.role = existingUser.role;
 
       return token;
@@ -80,9 +91,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
+
       if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect to sign-in
+        if (!isLoggedIn) return false;
+        
+        // Check if 2FA is enabled and confirmed
+        if (auth.user.isTwoFactorEnabled && !auth.user.isTwoFactorConfirmed) {
+          return false;
+        }
+        
+        return true;
       }
       return true;
     },
