@@ -13,8 +13,8 @@ const FEATURED_BOOKS = [
     author: "Elena Rossi",
     description: "Discover how living with less can bring more joy, focus, and clarity to your everyday life.",
     price: "$14.99",
-    bgColor: "bg-[#F3F4F6]",
-    cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop",
+    bgColor: "bg-bg-accent",
+    cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop&crop=entropy",
   },
   {
     id: 2,
@@ -22,17 +22,17 @@ const FEATURED_BOOKS = [
     author: "Kenji Sato",
     description: "A gripping mystery thriller set in the neon-lit streets of modern Tokyo.",
     price: "$19.99",
-    bgColor: "bg-[#E5E7EB]",
-    cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800&auto=format&fit=crop",
+    bgColor: "bg-bg-secondary",
+    cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=800&auto=format&fit=crop&crop=entropy",
   },
   {
     id: 3,
-    title: "Design Systems",
-    author: "Sarah Drasner",
+    title: "The Design of Everyday Things",
+    author: "Don Norman",
     description: "A comprehensive guide to building modern, scalable design systems for the web.",
     price: "$29.99",
-    bgColor: "bg-[#F9FAFB]",
-    cover: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=800&auto=format&fit=crop",
+    bgColor: "bg-bg-soft",
+    cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=800&auto=format&fit=crop&crop=entropy",
   },
   {
     id: 4,
@@ -40,8 +40,8 @@ const FEATURED_BOOKS = [
     author: "Alex Michaelides",
     description: "A shocking psychological thriller of a woman's act of violence against her husband.",
     price: "$21.99",
-    bgColor: "bg-[#F3F4F6]",
-    cover: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=800&auto=format&fit=crop",
+    bgColor: "bg-bg-accent",
+    cover: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=800&auto=format&fit=crop&crop=entropy",
   },
   {
     id: 5,
@@ -49,8 +49,8 @@ const FEATURED_BOOKS = [
     author: "James Clear",
     description: "No matter your goals, Atomic Habits offers a proven framework for improving every day.",
     price: "$16.99",
-    bgColor: "bg-[#E5E7EB]",
-    cover: "https://images.unsplash.com/photo-1522407183863-c0bf2256188c?q=80&w=800&auto=format&fit=crop",
+    bgColor: "bg-bg-secondary",
+    cover: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?q=80&w=800&auto=format&fit=crop&crop=entropy",
   }
 ];
 
@@ -116,7 +116,7 @@ export function HeroCarousel() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-highlight uppercase bg-highlight/10 rounded-full"
+                className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-brand-secondary uppercase bg-brand-secondary/10 rounded-full"
               >
                 Featured Release
               </motion.div>
@@ -142,10 +142,10 @@ export function HeroCarousel() {
                 transition={{ delay: 0.5 }}
                 className="flex items-center space-x-4 pt-4"
               >
-                <Button size="lg" className="rounded-full px-8">
+                <Button size="lg" className="rounded-bookzen px-8 bg-brand-primary hover:bg-opacity-90 text-white transition-bookzen">
                   Buy Now - {current.price}
                 </Button>
-                <Button variant="outline" size="lg" className="rounded-full px-8 bg-white/50 backdrop-blur-sm">
+                <Button variant="outline" size="lg" className="rounded-bookzen px-8 text-primary border-primary hover:bg-primary hover:text-white transition-bookzen">
                   Read Preview
                 </Button>
               </motion.div>
@@ -158,11 +158,13 @@ export function HeroCarousel() {
               transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
               className="relative hidden md:block perspective-1000"
             >
-              <div className="relative w-72 h-[450px] mx-auto shadow-2xl group hover:-translate-y-4 transition-transform duration-500 rounded-r-xl overflow-hidden">
+              <div className="relative w-72 h-[450px] mx-auto shadow-2xl group hover:-translate-y-4 transition-transform duration-500 rounded-bookzen overflow-hidden">
                 <Image
                   src={current.cover}
                   alt={current.title}
                   fill
+                  sizes="(max-width: 768px) 0px, 288px"
+                  priority={currentIndex === 0}
                   className="object-cover"
                 />
                 {/* Book spine effect */}

@@ -3,24 +3,31 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ShoppingCart, Search, Menu, User } from "lucide-react";
+import { ShoppingCart, Search, Menu, User, Heart, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useCart } from "@/store/useCart";
+import { useWishlist } from "@/store/useWishlist";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { WishlistDrawer } from "@/components/wishlist/WishlistDrawer";
+import { useTheme } from "next-themes";
 
 export function Header() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [mounted, setMounted] = React.useState(false);
   const { items, setIsOpen } = useCart();
+  const { items: wishlistItems, setIsOpen: setWishlistOpen } = useWishlist();
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
   
-  // Calculate total items in cart
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
+  const wishlistCount = wishlistItems.length;
 
   React.useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
@@ -40,91 +47,109 @@ export function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-bookzen ${
           isScrolled
-            ? "bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 py-3"
-            : "bg-transparent py-5"
+            ? "bg-background shadow-sm border-b border-border py-3"
+            : "bg-background py-5"
         }`}
       >
         <div className="container mx-auto px-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center font-bold text-xl">
-              B
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-primary">
+            <span className="text-3xl font-bold tracking-tight text-primary">
               Bems Books
             </span>
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="group relative text-gray-600 hover:text-primary font-medium transition-colors">
+            <Link href="/" className="text-primary hover:text-brand-primary font-medium transition-colors">
               Home
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-highlight transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="/catalog" className="group relative text-gray-600 hover:text-primary font-medium transition-colors">
+            <Link href="/catalog" className="text-primary hover:text-brand-primary font-medium transition-colors">
               Catalog
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-highlight transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="/bestsellers" className="group relative text-gray-600 hover:text-primary font-medium transition-colors">
+            <Link href="/bestsellers" className="text-primary hover:text-brand-primary font-medium transition-colors">
               Bestsellers
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-highlight transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="/authors" className="group relative text-gray-600 hover:text-primary font-medium transition-colors">
+            <Link href="/authors" className="text-primary hover:text-brand-primary font-medium transition-colors">
               Authors
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-highlight transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center space-x-4">
-            <form onSubmit={handleSearch} className="hidden lg:flex relative w-64">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <form onSubmit={handleSearch} className="hidden lg:flex relative w-72">
               <Input
                 type="text"
                 placeholder="Search books, authors..."
-                className="pl-10 rounded-full bg-gray-50/50"
+                className="pl-10 rounded-bookzen bg-bg-secondary text-primary border-none focus-visible:ring-1 focus-visible:ring-brand-primary placeholder:text-muted-foreground"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <button type="submit" className="absolute left-3 top-2.5">
-                <Search className="w-5 h-5 text-gray-400" />
+                <Search className="w-5 h-5 text-muted-foreground" />
               </button>
             </form>
+            
+            {/* Theme Toggle */}
+            {mounted && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-primary hover:text-brand-primary hover:bg-transparent" 
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label="Toggle Theme"
+              >
+                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </Button>
+            )}
             
             {/* Auth-aware User Button */}
             {session?.user ? (
               <Link href="/dashboard">
-                <div className="w-9 h-9 bg-gradient-to-br from-primary to-highlight rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer hover:scale-110 transition-transform shadow-md">
+                <div className="w-9 h-9 bg-brand-primary rounded-full flex items-center justify-center text-white text-sm font-bold cursor-pointer hover:bg-opacity-90 transition-bookzen shadow-sm">
                   {session.user.name?.charAt(0)?.toUpperCase() || "U"}
                 </div>
               </Link>
             ) : (
               <Link href="/sign-in">
-                <Button variant="ghost" size="icon" className="relative hidden sm:flex">
+                <Button variant="ghost" size="icon" className="relative hidden sm:flex text-primary hover:text-brand-primary hover:bg-transparent">
                   <User className="w-5 h-5" />
                 </Button>
               </Link>
             )}
 
-            <Button variant="ghost" size="icon" className="relative" onClick={() => setIsOpen(true)}>
+            {/* Wishlist Button */}
+            <Button variant="ghost" size="icon" className="relative text-primary hover:text-brand-primary hover:bg-transparent" onClick={() => setWishlistOpen(true)}>
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-0 right-0 w-4 h-4 bg-brand-primary text-[10px] font-bold text-white rounded-full flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Button>
+
+            {/* Cart Button */}
+            <Button variant="ghost" size="icon" className="relative text-primary hover:text-brand-primary hover:bg-transparent" onClick={() => setIsOpen(true)}>
               <ShoppingCart className="w-5 h-5" />
               {itemCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-highlight text-[10px] font-bold text-white rounded-full flex items-center justify-center">
+                <span className="absolute top-0 right-0 w-4 h-4 bg-brand-primary text-[10px] font-bold text-white rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
               )}
             </Button>
 
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden text-primary hover:text-brand-primary hover:bg-transparent">
               <Menu className="w-6 h-6" />
             </Button>
           </div>
         </div>
       </header>
       
-      {/* Global Cart Drawer */}
+      {/* Global Drawers */}
       <CartDrawer />
+      <WishlistDrawer />
     </>
   );
 }
